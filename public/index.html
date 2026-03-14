@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GOAT Agent Economy — Live Dashboard</title>
+<style>
+  :root {
+    --bg:#0a0a0f;--surface:#111118;--surface2:#1a1a24;--border:#2a2a3a;
+    --accent:#7c3aed;--accent2:#06b6d4;--green:#10b981;--yellow:#f59e0b;
+    --red:#ef4444;--text:#e2e8f0;--muted:#64748b;--goat:#f59e0b;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'SF Mono','Fira Code',monospace;min-height:100vh}
+  header{border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;gap:12px;background:var(--surface);position:sticky;top:0;z-index:10}
+  .logo{font-size:22px}
+  .ht{flex:1}.ht h1{font-size:16px;font-weight:700}.ht p{font-size:11px;color:var(--muted);margin-top:2px}
+  .badge{padding:3px 10px;border-radius:20px;font-size:11px;border:1px solid}
+  .live{border-color:var(--green);color:var(--green);background:rgba(16,185,129,.1);display:flex;align-items:center;gap:5px}
+  .pulse{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 1.5s infinite}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+  .stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border-bottom:1px solid var(--border)}
+  @media(max-width:700px){.stats-bar{grid-template-columns:repeat(2,1fr)}}
+  .stat{background:var(--surface);padding:14px 16px;text-align:center}
+  .stat-v{font-size:26px;font-weight:700;color:var(--accent2)}
+  .stat-l{font-size:10px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.05em}
+  .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--border)}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+  .panel{background:var(--surface);display:flex;flex-direction:column;max-height:560px}
+  .ph{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:var(--surface2)}
+  .pt{font-size:13px;font-weight:600;flex:1}
+  .pc{background:var(--accent);color:#fff;padding:2px 7px;border-radius:10px;font-size:10px}
+  .pb{flex:1;overflow-y:auto;padding:6px 0}
+  .pb::-webkit-scrollbar{width:3px}
+  .pb::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+  /* Agent card */
+  .ac{padding:11px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;animation:si .3s ease}
+  .ac:hover{background:var(--surface2)}
+  @keyframes si{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+  .ac-top{display:flex;align-items:center;gap:8px}
+  .aid{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;padding:2px 7px;border-radius:5px;font-size:11px;font-weight:700;min-width:38px;text-align:center}
+  .aname{font-size:13px;font-weight:600;flex:1}
+  .ax{font-size:10px;padding:2px 5px;border-radius:3px;background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.3)}
+  .aowner{font-size:10px;color:var(--muted);margin-top:4px}
+  .adesc{font-size:11px;color:#94a3b8;margin-top:3px;line-height:1.4}
+  .ameta{display:flex;gap:8px;margin-top:5px;flex-wrap:wrap}
+  .atag{font-size:9px;padding:1px 5px;border-radius:3px;background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+  .ablock{font-size:10px;color:var(--muted);margin-top:4px}
+
+  /* TX item */
+  .ti{padding:9px 16px;border-bottom:1px solid var(--border);cursor:pointer;animation:si .3s ease;transition:background .15s}
+  .ti:hover{background:var(--surface2)}
+  .ti.atx{border-left:3px solid var(--accent)}
+  .ti-top{display:flex;align-items:center;gap:6px}
+  .ta{font-size:14px;font-weight:700;color:var(--green)}
+  .tk{font-size:10px;color:var(--muted)}
+  .tbadge{font-size:9px;padding:2px 5px;border-radius:3px;margin-left:auto;background:rgba(6,182,212,.1);color:var(--accent2);border:1px solid rgba(6,182,212,.3)}
+  .atx .tbadge{background:rgba(124,58,237,.15);color:var(--accent);border-color:rgba(124,58,237,.3)}
+  .taddrs{font-size:10px;color:var(--muted);margin-top:3px;display:flex;align-items:center;gap:5px}
+  .tfrom{color:var(--accent2)}.tto{color:var(--green)}
+  .ttime{font-size:9px;color:var(--muted);margin-top:2px}
+  .thash{font-size:9px;color:var(--muted);margin-top:1px}
+
+  /* Graph panel */
+  .gpanel{grid-column:span 3;background:var(--surface)}
+  @media(max-width:900px){.gpanel{grid-column:span 1}}
+  #gc{width:100%;height:360px;display:block}
+
+  .empty{padding:36px;text-align:center;color:var(--muted);font-size:12px;line-height:1.6}
+  .ei{font-size:28px;margin-bottom:8px}
+
+  footer{border-top:1px solid var(--border);padding:10px 20px;font-size:10px;color:var(--muted);display:flex;gap:16px;align-items:center;flex-wrap:wrap;background:var(--surface)}
+  footer a{color:var(--accent2);text-decoration:none}
+  footer a:hover{text-decoration:underline}
+  .fs{flex:1}
+
+  #tc{position:fixed;bottom:16px;right:16px;display:flex;flex-direction:column;gap:6px;z-index:100}
+  .toast{background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent);padding:10px 14px;border-radius:7px;font-size:12px;max-width:300px;animation:si .3s ease}
+  .toast.g{border-left-color:var(--green)}
+  .toast.y{border-left-color:var(--yellow)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><img src="https://cdn.prod.website-files.com/6669a2e2b7f624149423b9be/6669a5a551ddf74e6fd005e0_goat%20network%20logo.svg" alt="GOAT" style="height:28px"></div>
+  <div class="ht">
+    <h1>GOAT Agent Economy — Live Dashboard</h1>
+    <p>ERC-8004 Identities + x402 Payments on GOAT Network</p>
+  </div>
+  <div class="badge" style="border-color:var(--goat);color:var(--goat)">MAINNET 2345</div>
+  <div class="badge" style="border-color:var(--accent2);color:var(--accent2)">TESTNET3 48816</div>
+  <div class="badge live"><div class="pulse"></div>LIVE</div>
+  <a href="/register.html" style="padding:6px 14px;border-radius:6px;background:var(--accent);color:#fff;font-size:12px;font-weight:600;text-decoration:none">+ Register Agent</a>
+</header>
+
+<div class="stats-bar">
+  <div class="stat"><div class="stat-v" id="s-agents">—</div><div class="stat-l">🪪 Agents</div></div>
+  <div class="stat"><div class="stat-v" id="s-txs">—</div><div class="stat-l">💸 Transfers</div></div>
+  <div class="stat"><div class="stat-v" id="s-vol">—</div><div class="stat-l">📊 Volume (USDC)</div></div>
+  <div class="stat"><div class="stat-v" id="s-atx">—</div><div class="stat-l">🤖 Agent↔Agent</div></div>
+</div>
+
+<div class="grid">
+  <div class="panel">
+    <div class="ph"><span>🪪</span><span class="pt">ERC-8004 Agent Registry</span><span class="pc" id="c-agents">0</span></div>
+    <div class="pb" id="agent-list"><div class="empty"><div class="ei">🔍</div>Loading agents from GOAT mainnet...</div></div>
+  </div>
+  <div class="panel">
+    <div class="ph"><span>💸</span><span class="pt">x402 Payment Feed</span><span class="pc" id="c-txs">0</span></div>
+    <div class="pb" id="tx-list"><div class="empty"><div class="ei">⏳</div>Loading transfers...</div></div>
+  </div>
+  <div class="panel">
+    <div class="ph"><span>🤖</span><span class="pt">Agent ↔ Agent Payments</span><span class="pc" id="c-atx">0</span></div>
+    <div class="pb" id="atx-list"><div class="empty"><div class="ei">🤝</div>Watching for agent-to-agent txs...<br><br><small>Appear when ERC-8004 agents pay each other via x402</small></div></div>
+  </div>
+  <div class="panel gpanel">
+    <div class="ph"><span>🕸️</span><span class="pt">Agent Payment Network</span><span style="font-size:10px;color:var(--muted)">nodes = agents · edges = payments</span></div>
+    <canvas id="gc"></canvas>
+  </div>
+</div>
+
+<footer>
+  <span>ERC-8004: <a href="https://explorer.goat.network/address/0x8004A169FB4a3325136EB29fA0ceB6D2e539a432" target="_blank">0x8004A169...432</a></span>
+  <span>Testnet3: <a href="https://explorer.testnet3.goat.network" target="_blank">explorer.testnet3.goat.network</a></span>
+  <span>Mainnet: <a href="https://explorer.goat.network" target="_blank">explorer.goat.network</a></span>
+  <div class="fs"></div>
+  <span id="last-upd">—</span>
+  <span><img src="https://cdn.prod.website-files.com/6669a2e2b7f624149423b9be/6669a5a551ddf74e6fd005e0_goat%20network%20logo.svg" alt="GOAT" style="height:14px;vertical-align:middle"> Built on GOAT Network</span>
+</footer>
+
+<div id="tc"></div>
+
+<script>
+const MAINNET  = 'https://rpc.goat.network'
+const TESTNET  = 'https://rpc.testnet3.goat.network'
+const TNET_EXP = 'https://explorer.testnet3.goat.network'
+// Mainnet ERC-8004 (chain 2345)
+const IDENTITY_MAINNET = '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432'
+// Testnet3 ERC-8004 (chain 48816) — deployed by GOATBot 🐐
+const IDENTITY_TESTNET = '0x556089008Fc0a60cD09390Eca93477ca254A5522'
+const USDC     = '0x29d1ee93e9ecf6e50f309f498e40a6b42d352fa1'
+const USDT     = '0xdce0af57e8f2ce957b3838cd2a2f3f3677965dd3'
+const REG_TOPIC = '0xca52e62c367d81bb2e328eb795f7c7ba24afb478408a26c0e201d155c449bc4a'
+
+let agents = [], agentWallets = new Set()
+let transfers = [], agentTxs = [], seenHashes = new Set()
+let initialLoadDone = false
+
+const $ = id => document.getElementById(id)
+const esc = s => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
+const short = a => a ? a.slice(0,8)+'…'+a.slice(-5) : '?'
+const usdc = (v,d=6) => (Number(v)/10**Number(d)).toFixed(4)
+const ago = ts => { if(!ts)return''; const s=Math.floor((Date.now()-new Date(ts))/1000); return s<60?s+'s ago':s<3600?Math.floor(s/60)+'m ago':Math.floor(s/3600)+'h ago' }
+
+function toast(msg, type='') {
+  const el = document.createElement('div')
+  el.className = 'toast '+type; el.textContent = msg
+  $('tc').appendChild(el)
+  setTimeout(()=>el.remove(), 4000)
+}
+
+// ── RPC ────────────────────────────────────────────────────────
+async function rpc(method, params=[]) {
+  const r = await fetch(MAINNET, {method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({jsonrpc:'2.0',method,params,id:1})})
+  return (await r.json()).result
+}
+
+// ── Agents ─────────────────────────────────────────────────────
+async function rpcTestnet(method, params=[]) {
+  const r = await fetch(TESTNET, {method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({jsonrpc:'2.0',method,params,id:1})})
+  return (await r.json()).result
+}
+
+async function loadAgents() {
+  try {
+    // Load from both mainnet + testnet3
+    const [mainnetLogs, testnetLogs] = await Promise.all([
+      rpc('eth_getLogs', [{address:IDENTITY_MAINNET,fromBlock:'0x0',toBlock:'latest',topics:[REG_TOPIC]}]),
+      rpcTestnet('eth_getLogs', [{address:IDENTITY_TESTNET,fromBlock:'0x0',toBlock:'latest',topics:[REG_TOPIC]}]),
+    ])
+    const allLogs = [
+      ...(mainnetLogs||[]).map(l=>({...l,_chain:'mainnet',_identity:IDENTITY_MAINNET})),
+      ...(testnetLogs||[]).map(l=>({...l,_chain:'testnet3',_identity:IDENTITY_TESTNET})),
+    ]
+    const logs = allLogs
+    if (!logs?.length) { renderAgents(); return }
+
+    const next = []
+    for (const log of logs) {
+      const agentId = parseInt(log.topics[1],16).toString()
+      const owner   = '0x'+log.topics[2].slice(26)
+      const block   = parseInt(log.blockNumber,16)
+      const txHash  = log.transactionHash
+      let name=`Agent #${agentId}`, desc='', x402=false, svcs=[]
+      try {
+        const hex = log.data.slice(2)
+        const len = parseInt(hex.slice(64,128),16)
+        const raw = hex.slice(128, 128+len*2)
+        const uri = decodeURIComponent(raw.match(/.{2}/g).map(b=>'%'+b).join(''))
+        if (uri.startsWith('data:application/json;base64,')) {
+          const j = JSON.parse(atob(uri.split(',')[1]))
+          name=j.name||name; desc=j.description||''; x402=j.x402Support||false; svcs=j.services||[]
+        }
+      } catch {}
+      const chain = log._chain || 'mainnet'
+      const explorerBase = chain==='testnet3' ? 'https://explorer.testnet3.goat.network' : 'https://explorer.goat.network'
+      agentWallets.add(owner.toLowerCase())
+      next.push({agentId,owner,name,desc,x402,svcs,block,txHash,chain,explorerBase})
+    }
+
+    const added = next.filter(a=>!agents.find(b=>b.agentId===a.agentId&&b.chain===a.chain))
+    if (initialLoadDone) added.forEach(a=>toast(`🪪 Agent #${a.agentId}: ${a.name}`, 'y'))
+    agents = next
+    renderAgents()
+    updateStats()
+  } catch(e) { console.error('agents',e) }
+}
+
+function copyAddr(addr, el) {
+  navigator.clipboard.writeText(addr).then(()=>{
+    const old = el.textContent; el.textContent = '✓ copied'
+    setTimeout(()=>el.textContent=old, 1500)
+  })
+}
+
+async function loadBalance(addr) {
+  try {
+    const res = await rpcTestnet('eth_getBalance',[addr,'latest'])
+    return (parseInt(res,16)/1e18).toFixed(6) + ' BTC'
+  } catch { return '?' }
+}
+
+function renderAgents() {
+  $('c-agents').textContent = agents.length
+  const el = $('agent-list')
+  if (!agents.length) { el.innerHTML='<div class="empty"><div class="ei">🔍</div>No agents registered yet</div>'; return }
+  el.innerHTML = agents.map(a=>`
+    <div class="ac" onclick="window.open('${a.explorerBase}/address/${a.owner}','_blank')">
+      <div class="ac-top">
+        <div class="aid">#${a.agentId}</div>
+        <div class="aname">${esc(a.name)}</div>
+        ${a.x402?'<div class="ax">x402 ✓</div>':''}
+      </div>
+      <div class="aowner" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <a href="${a.explorerBase}/address/${a.owner}" target="_blank"
+           style="color:var(--muted);font-size:10px;text-decoration:none"
+           onclick="event.stopPropagation()"
+           title="${a.owner}">${short(a.owner)}</a>
+        <span onclick="event.stopPropagation();copyAddr('${a.owner}',this)"
+              style="cursor:pointer;font-size:9px;color:var(--accent2);border:1px solid var(--accent2);border-radius:3px;padding:0 4px;opacity:.7"
+              title="Copy full address">copy</span>
+        <span class="abal" id="bal-${a.agentId}" style="font-size:9px;color:var(--muted)">…</span>
+      </div>
+      ${a.desc?`<div class="adesc">${esc(a.desc.slice(0,100))}${a.desc.length>100?'…':''}</div>`:''}
+      <div class="ameta">
+        ${a.svcs.map(s=>`<span class="atag">${esc(s.name)}</span>`).join('')}
+        ${a.x402?'<span class="atag" style="color:var(--green);border-color:rgba(16,185,129,.4)">x402</span>':''}
+      </div>
+      <div class="ablock">
+        <span style="color:${a.chain==='testnet3'?'var(--accent2)':'var(--goat)'}">${a.chain==='testnet3'?'testnet3':'mainnet'}</span>
+        · Block #${a.block}
+        · <a href="${a.explorerBase}/tx/${a.txHash}" target="_blank" style="color:var(--accent2)" onclick="event.stopPropagation()">tx →</a>
+        · <a href="${a.explorerBase}/address/${a.owner}" target="_blank" style="color:var(--muted);font-size:10px" onclick="event.stopPropagation()">addr →</a>
+      </div>
+    </div>`).join('')
+
+  // Load balances async after render
+  agents.forEach(async a => {
+    const el = $('bal-'+a.agentId)
+    if (!el) return
+    const bal = await loadBalance(a.owner)
+    el.textContent = '⚡ ' + bal
+  })
+}
+
+// ── Transfers ──────────────────────────────────────────────────
+async function loadTransfers() {
+  try {
+    const [u,d] = await Promise.all([
+      fetch(`${TNET_EXP}/api/v2/token-transfers?token_address=${USDC}`).then(r=>r.json()).catch(()=>({items:[]})),
+      fetch(`${TNET_EXP}/api/v2/token-transfers?token_address=${USDT}`).then(r=>r.json()).catch(()=>({items:[]})),
+    ])
+    const all = [...(u.items||[]), ...(d.items||[])]
+      .filter(t=>t.total&&parseInt(t.total.value)>0)
+      .sort((a,b)=>b.block_number-a.block_number)
+
+    let gotNew = false
+    for (const t of all) {
+      const h = t.transaction_hash
+      if (seenHashes.has(h)) continue
+      seenHashes.add(h); gotNew = true
+      const from = t.from?.hash?.toLowerCase()
+      const to   = t.to?.hash?.toLowerCase()
+      const isA  = agentWallets.has(from)||agentWallets.has(to)
+      const tx = {
+        hash:h, from:t.from?.hash, to:t.to?.hash,
+        amount:usdc(t.total.value,t.total.decimals),
+        symbol:t.token?.symbol||'USDC',
+        block:t.block_number, timestamp:t.timestamp, isA
+      }
+      transfers.unshift(tx)
+      if (isA) { agentTxs.unshift(tx); if (initialLoadDone) toast(`🤖 Agent payment: ${tx.amount} ${tx.symbol}`, 'g') }
+    }
+    transfers = transfers.slice(0,100)
+    if (gotNew) { renderTxs(); renderAgentTxs(); updateStats(); drawGraph() }
+  } catch(e) { console.error('transfers',e) }
+}
+
+function renderTxs() {
+  $('c-txs').textContent = transfers.length
+  const el = $('tx-list')
+  if (!transfers.length) { el.innerHTML='<div class="empty"><div class="ei">⏳</div>Waiting...</div>'; return }
+  el.innerHTML = transfers.slice(0,60).map(t=>`
+    <div class="ti ${t.isA?'atx':''}" onclick="window.open('${TNET_EXP}/tx/${t.hash}','_blank')">
+      <div class="ti-top">
+        <span class="ta">${t.amount}</span><span class="tk">${t.symbol}</span>
+        <span class="tbadge">${t.isA?'🤖 Agent TX':'transfer'}</span>
+      </div>
+      <div class="taddrs"><span class="tfrom">${short(t.from)}</span><span>→</span><span class="tto">${short(t.to)}</span></div>
+      <div class="ttime">Block #${t.block}${t.timestamp?' · '+ago(t.timestamp):''}</div>
+    </div>`).join('')
+}
+
+function renderAgentTxs() {
+  $('c-atx').textContent = agentTxs.length
+  const el = $('atx-list')
+  if (!agentTxs.length) {
+    el.innerHTML='<div class="empty"><div class="ei">🤝</div>Watching for agent-to-agent txs...<br><br><small>Appear when ERC-8004 agents pay each other via x402</small></div>'
+    return
+  }
+  el.innerHTML = agentTxs.map(t=>{
+    const fa = agents.find(a=>a.owner.toLowerCase()===t.from?.toLowerCase())
+    const ta = agents.find(a=>a.owner.toLowerCase()===t.to?.toLowerCase())
+    return `
+    <div class="ti atx" onclick="window.open('${TNET_EXP}/tx/${t.hash}','_blank')">
+      <div class="ti-top">
+        <span class="ta">${t.amount}</span><span class="tk">${t.symbol}</span>
+        <span class="tbadge">🤖 Agent TX</span>
+      </div>
+      <div class="taddrs">
+        <span class="tfrom">${fa?'🤖 '+esc(fa.name):short(t.from)}</span>
+        <span>→</span>
+        <span class="tto">${ta?'🤖 '+esc(ta.name):short(t.to)}</span>
+      </div>
+      <div class="ttime">Block #${t.block}</div>
+    </div>`
+  }).join('')
+}
+
+function updateStats() {
+  $('s-agents').textContent = agents.length
+  $('s-txs').textContent    = transfers.length
+  $('s-vol').textContent    = transfers.reduce((s,t)=>s+parseFloat(t.amount||0),0).toFixed(2)
+  $('s-atx').textContent    = agentTxs.length
+  $('last-upd').textContent = 'Updated ' + new Date().toLocaleTimeString()
+}
+
+// ── Network Graph ──────────────────────────────────────────────
+const goatLogo = new Image()
+goatLogo.crossOrigin = 'anonymous'
+goatLogo.src = 'https://cdn.prod.website-files.com/6669a2e2b7f624149423b9be/6669a5a551ddf74e6fd005e0_goat%20network%20logo.svg'
+goatLogo.onload = () => drawGraph()
+
+function drawGraph() {
+  const canvas = $('gc')
+  const ctx = canvas.getContext('2d')
+  canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight
+  const W=canvas.width, H=canvas.height
+  ctx.clearRect(0,0,W,H)
+
+  // Background grid
+  ctx.strokeStyle='rgba(42,42,58,0.5)'; ctx.lineWidth=1
+  for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
+  for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+
+  if (!agents.length) {
+    ctx.fillStyle='#64748b'; ctx.font='13px monospace'; ctx.textAlign='center'
+    ctx.fillText('No agents registered yet — register yours! 🐐', W/2, H/2)
+    return
+  }
+
+  const cx=W/2, cy=H/2, r=Math.min(W,H)*0.32, nr=22
+  const pos = agents.map((a,i)=>{
+    const angle=(i/agents.length)*Math.PI*2-Math.PI/2
+    return {x:cx+r*Math.cos(angle), y:cy+r*Math.sin(angle), a}
+  })
+
+  // Draw edges for agent↔agent txs
+  for(const tx of agentTxs.slice(0,20)){
+    const fp=pos.find(p=>p.a.owner.toLowerCase()===tx.from?.toLowerCase())
+    const tp=pos.find(p=>p.a.owner.toLowerCase()===tx.to?.toLowerCase())
+    if(!fp||!tp) continue
+    const g=ctx.createLinearGradient(fp.x,fp.y,tp.x,tp.y)
+    g.addColorStop(0,'rgba(124,58,237,0.6)')
+    g.addColorStop(1,'rgba(6,182,212,0.6)')
+    ctx.strokeStyle=g; ctx.lineWidth=2; ctx.setLineDash([4,3])
+    ctx.beginPath(); ctx.moveTo(fp.x,fp.y); ctx.lineTo(tp.x,tp.y); ctx.stroke()
+    ctx.setLineDash([])
+    // Arrow
+    const angle=Math.atan2(tp.y-fp.y,tp.x-fp.x)
+    const mx=(fp.x+tp.x)/2, my=(fp.y+tp.y)/2
+    ctx.fillStyle='rgba(124,58,237,0.8)'
+    ctx.beginPath(); ctx.moveTo(mx+8*Math.cos(angle),my+8*Math.sin(angle))
+    ctx.lineTo(mx+8*Math.cos(angle+2.5),my+8*Math.sin(angle+2.5))
+    ctx.lineTo(mx+8*Math.cos(angle-2.5),my+8*Math.sin(angle-2.5))
+    ctx.fill()
+    // Amount label
+    ctx.fillStyle='rgba(16,185,129,0.9)'; ctx.font='10px monospace'; ctx.textAlign='center'
+    ctx.fillText(tx.amount+' '+tx.symbol, mx, my-8)
+  }
+
+  // Draw agent nodes
+  for(const {x,y,a} of pos){
+    // Glow
+    const glow=ctx.createRadialGradient(x,y,0,x,y,nr+12)
+    glow.addColorStop(0,'rgba(124,58,237,0.25)')
+    glow.addColorStop(1,'rgba(124,58,237,0)')
+    ctx.fillStyle=glow; ctx.beginPath(); ctx.arc(x,y,nr+12,0,Math.PI*2); ctx.fill()
+
+    // Circle
+    const grad=ctx.createRadialGradient(x-5,y-5,0,x,y,nr)
+    grad.addColorStop(0,'#7c3aed'); grad.addColorStop(1,'#4c1d95')
+    ctx.fillStyle=grad; ctx.beginPath(); ctx.arc(x,y,nr,0,Math.PI*2); ctx.fill()
+    ctx.strokeStyle='rgba(124,58,237,0.8)'; ctx.lineWidth=2; ctx.stroke()
+
+    // x402 ring
+    if(a.x402){
+      ctx.strokeStyle='rgba(16,185,129,0.7)'; ctx.lineWidth=2; ctx.setLineDash([3,2])
+      ctx.beginPath(); ctx.arc(x,y,nr+5,0,Math.PI*2); ctx.stroke()
+      ctx.setLineDash([])
+    }
+
+    // Agent ID
+    ctx.fillStyle='#fff'; ctx.font='bold 11px monospace'; ctx.textAlign='center'
+    ctx.fillText('#'+a.agentId, x, y+4)
+
+    // Name label
+    ctx.fillStyle='#e2e8f0'; ctx.font='11px monospace'; ctx.textAlign='center'
+    const label = a.name.length>12?a.name.slice(0,12)+'…':a.name
+    ctx.fillText(label, x, y+nr+14)
+  }
+
+  // Center: GOAT logo
+  ctx.fillStyle='rgba(245,158,11,0.15)'; ctx.beginPath(); ctx.arc(cx,cy,28,0,Math.PI*2); ctx.fill()
+  if (goatLogo.complete && goatLogo.naturalWidth) {
+    ctx.drawImage(goatLogo, cx-20, cy-10, 40, 20)
+  }
+  ctx.fillStyle='rgba(245,158,11,0.6)'; ctx.font='9px monospace'; ctx.textAlign='center'; ctx.fillText('GOAT',cx,cy+22)
+}
+
+// ── Poll loop ─────────────────────────────────────────────────
+async function tick() {
+  await loadAgents()
+  await loadTransfers()
+  if (!initialLoadDone) initialLoadDone = true
+}
+
+tick()
+setInterval(tick, 5000)
+
+// Redraw graph on resize
+window.addEventListener('resize', drawGraph)
+</script>
+</body>
+</html>

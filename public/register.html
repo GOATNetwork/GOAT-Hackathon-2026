@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+  <body>
+    <p><a href="/">← Back to Dashboard</a></p>
+    <h2>ERC-8004 Agent Registration</h2>
+    <h4>Agent URI</h4>
+    <input id="uriInput" type="text" placeholder="Enter your agent URI" style="width:80%;padding:6px;font-size:14px;">
+    <button id="preview">Preview</button>
+    <h4>Agent Metadata</h4>
+    <pre id="meta">Enter a URI and click Preview to load metadata</pre>
+    <hr>
+    <button id="send">Register ERC8004</button>
+    <pre id="out"></pre>
+
+    <script type="module">
+      import { Interface } from "https://cdn.jsdelivr.net/npm/ethers@6.13.4/+esm";
+
+      const out = document.getElementById("out");
+      const uriInput = document.getElementById("uriInput");
+      const meta = document.getElementById("meta");
+      const exampleURI = "https://gist.githubusercontent.com/eigmax/9c4bd5b5e3a9159aa3995c360a5d854e/raw/868bbca6ba198084fbedb4abfc89139a935ba6a4/gistfile1.txt";
+      const to = "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432";
+
+      uriInput.value = exampleURI;
+
+      function loadPreview() {
+        const uri = uriInput.value.trim();
+        if (!uri) { meta.textContent = "Please enter a URI"; return; }
+        meta.textContent = "Loading...";
+        fetch(uri)
+          .then(r => r.text())
+          .then(text => {
+            try {
+              meta.textContent = JSON.stringify(JSON.parse(text), null, 2);
+            } catch {
+              meta.textContent = text;
+            }
+          })
+          .catch(err => { meta.textContent = "Failed to load: " + err.message; });
+      }
+
+      document.getElementById("preview").onclick = loadPreview;
+      loadPreview();
+
+      const GOAT_TESTNET3 = {
+        chainId: "0xBEB0",
+        chainName: "GOAT Testnet3",
+        nativeCurrency: { name: "BTC", symbol: "BTC", decimals: 18 },
+        rpcUrls: ["https://rpc.testnet3.goat.network"],
+        blockExplorerUrls: ["https://explorer.testnet3.goat.network"],
+      };
+
+      async function switchToGoatTestnet() {
+        try {
+          await window.ethereum.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: GOAT_TESTNET3.chainId }],
+          });
+        } catch (e) {
+          if (e.code === 4902) {
+            await window.ethereum.request({
+              method: "wallet_addEthereumChain",
+              params: [GOAT_TESTNET3],
+            });
+          } else {
+            throw e;
+          }
+        }
+      }
+
+      const iface = new Interface([
+        "function register(string agentURI) returns (uint256 agentId)"
+      ]);
+
+      document.getElementById("send").onclick = async () => {
+        try {
+          const agentURI = uriInput.value.trim();
+          if (!agentURI) throw new Error("Please enter an agent URI");
+          if (!window.ethereum) throw new Error("MetaMask not found");
+
+          const data = iface.encodeFunctionData("register", [agentURI]);
+
+          out.textContent = "Switching to GOAT Testnet3...";
+          await switchToGoatTestnet();
+
+          const [from] = await window.ethereum.request({ method: "eth_requestAccounts" });
+
+          const tx = { from, to, data, value: "0x0" };
+          out.textContent = "tx:\n" + JSON.stringify(tx, null, 2) + "\n\nsending...";
+
+          const txHash = await window.ethereum.request({
+            method: "eth_sendTransaction",
+            params: [tx],
+          });
+
+          const explorerUrl = "https://explorer.testnet3.goat.network/tx/" + txHash;
+          out.innerHTML += "\n\ntxHash: " + txHash + "\n\n<a href=\"" + explorerUrl + "\" target=\"_blank\">" + explorerUrl + "</a>";
+        } catch (err) {
+          out.textContent += "\n\nError: " + err.message;
+        }
+      };
+    </script>
+  </body>
+</html>

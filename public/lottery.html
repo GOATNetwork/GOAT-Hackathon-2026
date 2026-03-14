@@ -11,63 +11,127 @@
     --red:#ef4444;--text:#e2e8f0;--muted:#64748b;--goat:#f59e0b;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{background:var(--bg);color:var(--text);font-family:'SF Mono','Fira Code',monospace;min-height:100vh;display:flex;flex-direction:column}
-  header{border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;gap:12px;background:var(--surface)}
+  body{background:var(--bg);color:var(--text);font-family:'SF Mono','Fira Code',monospace;min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden}
+
+  /* Animated background */
+  body::before{
+    content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;
+    background:radial-gradient(ellipse at 20% 50%,rgba(124,58,237,.08) 0%,transparent 50%),
+               radial-gradient(ellipse at 80% 20%,rgba(6,182,212,.06) 0%,transparent 50%),
+               radial-gradient(ellipse at 50% 80%,rgba(245,158,11,.05) 0%,transparent 50%);
+    animation:bgShift 8s ease-in-out infinite alternate;
+  }
+  @keyframes bgShift{0%{opacity:.6}100%{opacity:1}}
+
+  header{border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;gap:12px;background:rgba(17,17,24,.9);position:relative;z-index:2;backdrop-filter:blur(10px)}
   .logo{font-size:22px}
   .ht{flex:1}.ht h1{font-size:16px;font-weight:700}.ht p{font-size:11px;color:var(--muted);margin-top:2px}
 
-  .container{max-width:600px;margin:0 auto;padding:40px 20px;flex:1;display:flex;flex-direction:column;align-items:center}
+  .container{max-width:650px;margin:0 auto;padding:40px 20px;flex:1;display:flex;flex-direction:column;align-items:center;position:relative;z-index:1}
 
-  .range-row{display:flex;gap:12px;align-items:center;margin-bottom:24px}
-  .range-row label{font-size:12px;color:var(--muted)}
-  .range-row input{
-    width:100px;padding:10px 12px;font-size:16px;font-family:inherit;text-align:center;
-    background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:6px;outline:none;
+  /* Sponsor badge */
+  .sponsor{
+    margin-bottom:28px;text-align:center;padding:12px 24px;border-radius:10px;
+    background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(6,182,212,.1));
+    border:1px solid rgba(124,58,237,.3);
   }
-  .range-row input:focus{border-color:var(--accent)}
-  .range-row span{font-size:18px;color:var(--muted)}
+  .sponsor-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}
+  .sponsor-name{font-size:18px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .sponsor-link{font-size:11px;color:var(--accent2);text-decoration:none;margin-top:2px;display:inline-block}
+  .sponsor-link:hover{text-decoration:underline}
 
-  .count-row{display:flex;gap:12px;align-items:center;margin-bottom:32px}
+  /* Title area */
+  .title-area{text-align:center;margin-bottom:32px}
+  .title-area h2{
+    font-size:32px;font-weight:800;letter-spacing:-.02em;
+    background:linear-gradient(135deg,var(--goat),var(--accent),var(--accent2));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    animation:titleGlow 3s ease-in-out infinite alternate;
+  }
+  @keyframes titleGlow{0%{filter:brightness(1)}100%{filter:brightness(1.3)}}
+  .title-area p{font-size:12px;color:var(--muted);margin-top:6px}
+
+  .config-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:12px;
+    padding:20px 24px;margin-bottom:28px;width:100%;
+  }
+  .range-row{display:flex;gap:12px;align-items:center;justify-content:center;margin-bottom:16px}
+  .range-row label{font-size:12px;color:var(--muted);min-width:40px}
+  .range-row input{
+    width:100px;padding:10px 12px;font-size:18px;font-family:inherit;text-align:center;font-weight:700;
+    background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;outline:none;
+    transition:border-color .2s,box-shadow .2s;
+  }
+  .range-row input:focus{border-color:var(--accent);box-shadow:0 0 12px rgba(124,58,237,.2)}
+  .range-row span{font-size:20px;color:var(--muted)}
+
+  .count-row{display:flex;gap:12px;align-items:center;justify-content:center}
   .count-row label{font-size:12px;color:var(--muted)}
   .count-row input{
-    width:80px;padding:10px 12px;font-size:16px;font-family:inherit;text-align:center;
-    background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:6px;outline:none;
+    width:80px;padding:10px 12px;font-size:18px;font-family:inherit;text-align:center;font-weight:700;
+    background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;outline:none;
+    transition:border-color .2s,box-shadow .2s;
   }
-  .count-row input:focus{border-color:var(--accent)}
+  .count-row input:focus{border-color:var(--accent);box-shadow:0 0 12px rgba(124,58,237,.2)}
 
   #draw{
-    padding:16px 48px;border-radius:10px;font-size:18px;font-weight:700;font-family:inherit;
-    cursor:pointer;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;
+    padding:18px 64px;border-radius:12px;font-size:20px;font-weight:800;font-family:inherit;letter-spacing:.05em;
+    cursor:pointer;border:none;color:#fff;position:relative;overflow:hidden;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    box-shadow:0 4px 20px rgba(124,58,237,.3),0 0 40px rgba(124,58,237,.1);
     transition:transform .15s,box-shadow .15s;
   }
-  #draw:hover{transform:scale(1.05);box-shadow:0 0 30px rgba(124,58,237,.4)}
-  #draw:active{transform:scale(.97)}
+  #draw::before{
+    content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
+    background:linear-gradient(45deg,transparent 30%,rgba(255,255,255,.1) 50%,transparent 70%);
+    animation:shimmer 2s infinite;
+  }
+  @keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+  #draw:hover{transform:scale(1.08);box-shadow:0 6px 30px rgba(124,58,237,.5),0 0 60px rgba(124,58,237,.2)}
+  #draw:active{transform:scale(.95)}
 
-  .result-area{margin-top:40px;text-align:center;min-height:120px}
+  .result-area{margin-top:36px;text-align:center;min-height:140px;position:relative}
 
   #rolling{
-    font-size:72px;font-weight:700;
-    background:linear-gradient(135deg,var(--accent),var(--accent2),var(--green));
+    font-size:80px;font-weight:800;letter-spacing:.02em;
+    background:linear-gradient(135deg,var(--goat),var(--accent),var(--accent2),var(--green));
+    background-size:300% 300%;
     -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-    min-height:90px;line-height:90px;
+    min-height:100px;line-height:100px;
+    animation:gradientMove 2s ease infinite;
+    transition:font-size .3s;
   }
+  #rolling.winner{
+    font-size:96px;line-height:110px;
+    animation:gradientMove 2s ease infinite, winnerPulse 1s ease-in-out 3;
+  }
+  @keyframes gradientMove{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+  @keyframes winnerPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 
-  #history{margin-top:32px;width:100%}
-  #history h4{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
-  .history-list{display:flex;flex-wrap:wrap;gap:8px}
+  .entropy-note{font-size:10px;color:var(--muted);margin-top:8px;opacity:.7}
+
+  /* Confetti canvas */
+  #confetti{position:fixed;top:0;left:0;width:100%;height:100%;z-index:100;pointer-events:none}
+
+  #history{margin-top:36px;width:100%}
+  #history h4{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;text-align:center}
+  .history-list{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
   .history-item{
-    padding:6px 14px;border-radius:6px;font-size:14px;font-weight:600;
-    background:var(--surface2);border:1px solid var(--border);color:var(--accent2);
-    animation:pop .3s ease;
+    padding:8px 16px;border-radius:8px;font-size:15px;font-weight:700;
+    background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(6,182,212,.1));
+    border:1px solid rgba(124,58,237,.3);color:var(--accent2);
+    animation:pop .4s cubic-bezier(.34,1.56,.64,1);
   }
-  @keyframes pop{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
+  @keyframes pop{from{opacity:0;transform:scale(.3) rotate(-10deg)}to{opacity:1;transform:scale(1) rotate(0)}}
 
-  footer{border-top:1px solid var(--border);padding:10px 20px;font-size:10px;color:var(--muted);display:flex;gap:16px;align-items:center;background:var(--surface)}
+  footer{border-top:1px solid var(--border);padding:10px 20px;font-size:10px;color:var(--muted);display:flex;gap:16px;align-items:center;background:rgba(17,17,24,.9);position:relative;z-index:2;backdrop-filter:blur(10px)}
   footer .fs{flex:1}
   footer a{color:var(--accent2);text-decoration:none}
 </style>
 </head>
 <body>
+
+<canvas id="confetti"></canvas>
 
 <header>
   <div class="logo"><img src="https://cdn.prod.website-files.com/6669a2e2b7f624149423b9be/6669a5a551ddf74e6fd005e0_goat%20network%20logo.svg" alt="GOAT" style="height:28px"></div>
@@ -79,43 +143,113 @@
 </header>
 
 <div class="container">
-  <div class="range-row">
-    <label>From</label>
-    <input type="number" id="minVal" value="1">
-    <span>—</span>
-    <label>To</label>
-    <input type="number" id="maxVal" value="100">
+  <div class="sponsor">
+    <div class="sponsor-label">Prizes Sponsored By</div>
+    <div class="sponsor-name">ClawUp</div>
+    <a href="https://docs.clawup.org/" target="_blank" class="sponsor-link">docs.clawup.org</a>
   </div>
-  <div class="count-row">
-    <label>Winners</label>
-    <input type="number" id="countVal" value="1" min="1">
+
+  <div class="title-area">
+    <h2>LUCKY DRAW</h2>
+    <p>Powered by system entropy (crypto.getRandomValues)</p>
+  </div>
+
+  <div class="config-card">
+    <div class="range-row">
+      <label>From</label>
+      <input type="number" id="minVal" value="1">
+      <span>—</span>
+      <label>To</label>
+      <input type="number" id="maxVal" value="100">
+    </div>
+    <div class="count-row">
+      <label>Winners</label>
+      <input type="number" id="countVal" value="1" min="1">
+    </div>
   </div>
 
   <button id="draw">DRAW</button>
 
   <div class="result-area">
     <div id="rolling"></div>
+    <div class="entropy-note" id="entropyNote"></div>
   </div>
 
   <div id="history" style="display:none">
-    <h4>History</h4>
+    <h4>Draw History</h4>
     <div class="history-list" id="historyList"></div>
   </div>
 </div>
 
 <footer>
   <span><img src="https://cdn.prod.website-files.com/6669a2e2b7f624149423b9be/6669a5a551ddf74e6fd005e0_goat%20network%20logo.svg" alt="GOAT" style="height:14px;vertical-align:middle"> Built on GOAT Network</span>
+  <span>Prizes by <a href="https://docs.clawup.org/" target="_blank">ClawUp</a></span>
   <div class="fs"></div>
   <a href="/">Dashboard</a>
 </footer>
 
 <script>
   const rolling = document.getElementById('rolling');
+  const entropyNote = document.getElementById('entropyNote');
   const historyEl = document.getElementById('history');
   const historyList = document.getElementById('historyList');
+  const canvas = document.getElementById('confetti');
+  const ctx = canvas.getContext('2d');
   let isRunning = false;
+  let drawCount = 0;
 
-  // Cryptographically secure random integer in [0, max)
+  // Resize confetti canvas
+  function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  // Confetti system
+  let particles = [];
+  const COLORS = ['#7c3aed','#06b6d4','#10b981','#f59e0b','#ef4444','#ec4899','#8b5cf6','#14b8a6'];
+
+  function spawnConfetti() {
+    for (let i = 0; i < 150; i++) {
+      particles.push({
+        x: canvas.width / 2 + (Math.random() - .5) * 200,
+        y: canvas.height / 2,
+        vx: (Math.random() - .5) * 16,
+        vy: Math.random() * -18 - 4,
+        size: Math.random() * 8 + 4,
+        color: COLORS[Math.floor(Math.random() * COLORS.length)],
+        rotation: Math.random() * 360,
+        rotSpeed: (Math.random() - .5) * 12,
+        life: 1,
+        decay: Math.random() * .008 + .005,
+      });
+    }
+    animateConfetti();
+  }
+
+  let confettiRunning = false;
+  function animateConfetti() {
+    if (confettiRunning) return;
+    confettiRunning = true;
+    function frame() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles = particles.filter(p => p.life > 0);
+      for (const p of particles) {
+        p.x += p.vx; p.y += p.vy; p.vy += .4;
+        p.vx *= .99; p.rotation += p.rotSpeed; p.life -= p.decay;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation * Math.PI / 180);
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+        ctx.restore();
+      }
+      if (particles.length > 0) requestAnimationFrame(frame);
+      else { confettiRunning = false; ctx.clearRect(0, 0, canvas.width, canvas.height) }
+    }
+    frame();
+  }
+
+  // Cryptographically secure random
   function secureRandom(max) {
     const arr = new Uint32Array(1);
     crypto.getRandomValues(arr);
@@ -132,6 +266,9 @@
     if (count > (max - min + 1)) { rolling.textContent = 'Winners > range'; return; }
 
     isRunning = true;
+    drawCount++;
+    rolling.classList.remove('winner');
+    entropyNote.textContent = '';
 
     // Pick unique winners using crypto.getRandomValues (system entropy)
     const winners = [];
@@ -143,26 +280,33 @@
       pool.splice(idx, 1);
     }
 
-    // Rolling animation
+    // Rolling animation with acceleration/deceleration
     let tick = 0;
-    const totalTicks = 30;
-    const interval = setInterval(() => {
+    const totalTicks = 40;
+    function nextTick() {
       const fake = min + secureRandom(max - min + 1);
       rolling.textContent = fake;
       tick++;
       if (tick >= totalTicks) {
-        clearInterval(interval);
         rolling.textContent = winners.join('  ');
+        rolling.classList.add('winner');
+        entropyNote.textContent = `Round #${drawCount} | ${new Date().toLocaleTimeString()} | crypto.getRandomValues`;
         isRunning = false;
+        spawnConfetti();
 
         // Add to history
         historyEl.style.display = 'block';
         const round = document.createElement('span');
         round.className = 'history-item';
-        round.textContent = winners.join(', ');
+        round.textContent = `#${drawCount}: ${winners.join(', ')}`;
         historyList.prepend(round);
+      } else {
+        // Ease-out: slower towards the end
+        const delay = 40 + (tick / totalTicks) * 120;
+        setTimeout(nextTick, delay);
       }
-    }, 60);
+    }
+    nextTick();
   };
 </script>
 </body>

@@ -17,9 +17,11 @@
 ## ERC-8004 Agent Registration & Dashboard
 
 - **Dashboard**: Live view of registered agents, x402 payment feed, and agent-to-agent payments on GOAT Network
-- **Register**: One-click ERC-8004 agent registration via MetaMask on GOAT Testnet3
+- **Register**: One-click ERC-8004 agent registration via MetaMask on GOAT Testnet3, you can also use [skills](./claude/skills/erc8004-register/SKILL.md).
 
-## Quick Start
+## Contribute
+
+Run the dashboard locally 
 
 ```bash
 cd public

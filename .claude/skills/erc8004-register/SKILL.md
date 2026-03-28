@@ -42,6 +42,7 @@ By registering an ERC-8004 agent and setting the Agent URI to your x402 merchant
 
 - **RPC**: `https://rpc.goat.network`
 - **Explorer**: `https://explorer.goat.network`
+- **x402 API**: `https://x402-api.goat.network/merchant`
 
 ## Prerequisites
 
@@ -75,12 +76,21 @@ Registering an agent requires gas (approximately **0.00013 BTC** total for regis
 
 **Mainnet** — User must transfer real BTC to the wallet address. There is no faucet on mainnet.
 
-### 3. (Optional) Testnet ERC20 Tokens
+### 3. (Optional) ERC20 Tokens
+
+**GOAT Testnet3:**
 
 | Token | Contract Address | Decimals |
 |-------|-----------------|----------|
 | USDC | `0x29d1ee93e9ecf6e50f309f498e40a6b42d352fa1` | 6 |
 | USDT | `0xdce0af57e8f2ce957b3838cd2a2f3f3677965dd3` | 6 |
+
+**GOAT Mainnet:**
+
+| Token | Contract Address | Decimals |
+|-------|-----------------|----------|
+| USDC | `0x3022b87ac063DE95b1570F46f5e470F8B53112D8` | 6 |
+| USDT | `0xE1AD845D93853fff44990aE0DcecD8575293681e` | 6 |
 
 ## Step 1: Register Agent
 
@@ -319,7 +329,7 @@ cd "$SKILL_DIR" && node src/contract.js goat-testnet \
 | `giveFeedback(...)` | ~150,000 | ~0.00002 BTC |
 | `revokeFeedback(...)` | ~50,000 | ~0.000007 BTC |
 
-> Gas price on GOAT Network is very low (~0.1 gwei). Total cost for a full registration flow (register + setAgentURI) is approximately **0.00013 BTC**.
+> Gas price on GOAT Network is very low (~0.000130007 gwei / 0.000000000000130007 BTC). Total cost for a full registration flow (register + setAgentURI) is extremely low.
 
 > Gas costs vary with URI/data length. Shorter strings = less gas.
 

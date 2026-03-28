@@ -57,7 +57,9 @@ interface IX402CallbackAdapter {
 | Need on-chain callbacks (NFT, DeFi) | DELEGATE |
 | High-security requirements | DELEGATE |
 
-## Environment (Testnet)
+## Environment
+
+### GOAT Testnet3 (Chain ID: 48816)
 
 - **Merchant Portal API**: `https://x402-api-lx58aabp0r.testnet3.goat.network`
   - Merchant management endpoints: `/merchant/v1/...`
@@ -65,14 +67,28 @@ interface IX402CallbackAdapter {
 - **Merchant Portal Frontend**: `https://x402-merchant-lx58aabp0r.testnet3.goat.network`
 - **RPC**: `https://rpc.testnet3.goat.network`
 - **Explorer**: `https://explorer.testnet3.goat.network`
-- **Chain ID**: 48816 (GOAT Testnet3)
 
-## Supported Tokens (GOAT Testnet3)
+### GOAT Mainnet (Chain ID: 2345)
+
+- **Merchant Portal API**: `https://x402-api.goat.network/merchant`
+- **RPC**: `https://rpc.goat.network`
+- **Explorer**: `https://explorer.goat.network`
+
+## Supported Tokens
+
+### GOAT Testnet3
 
 | Token | Contract Address | Decimals |
 |-------|-----------------|----------|
 | USDC  | `0x29d1ee93e9ecf6e50f309f498e40a6b42d352fa1` | 6 |
 | USDT  | `0xdce0af57e8f2ce957b3838cd2a2f3f3677965dd3` | 6 |
+
+### GOAT Mainnet
+
+| Token | Contract Address | Decimals |
+|-------|-----------------|----------|
+| USDC  | `0x3022b87ac063DE95b1570F46f5e470F8B53112D8` | 6 |
+| USDT  | `0xE1AD845D93853fff44990aE0DcecD8575293681e` | 6 |
 
 ## Faucet
 

@@ -1,14 +1,19 @@
 ---
 name: x402-merchant-onboard
-description: x402 merchant onboarding on GOAT Testnet3 - register merchant, configure receiving addresses, generate API keys, create payment orders, and manage the full merchant lifecycle on GOAT Network x402 payment protocol (testnet environment)
+description: x402 merchant onboarding on GOAT Network (Testnet3 and Mainnet) - register merchant, configure receiving addresses, generate API keys, create payment orders, and manage the full merchant lifecycle on the GOAT x402 payment protocol
 argument-hint: "[action]"
 ---
 
-# x402 Merchant Onboarding & Payment Flow (Testnet)
+# x402 Merchant Onboarding & Payment Flow (Testnet & Mainnet)
 
-> **This skill operates on GOAT Testnet3.** All addresses, tokens, and API endpoints are testnet environments. Tokens have no real value. Do NOT use testnet credentials or configurations in production.
+> **This skill works on both GOAT Testnet3 and GOAT Mainnet.** Pick your target
+> network in the [Base URL](#base-url--select-your-network) section below — every
+> command uses `$BASE` / `$CHAIN_ID`, so the same flow runs against either network.
+> **Default to Testnet3.** On Mainnet, tokens and fees are **real value** — confirm
+> the network with the user before any state-changing call, and never reuse
+> testnet credentials on mainnet.
 
-Guide the user through x402 merchant onboarding and payment operations on GOAT Network Testnet3.
+Guide the user through x402 merchant onboarding and payment operations on GOAT Network.
 
 ## DIRECT vs DELEGATE Mode
 
@@ -61,7 +66,7 @@ interface IX402CallbackAdapter {
 
 ### GOAT Testnet3 (Chain ID: 48816)
 
-- **Merchant Portal API**: `https://x402-api-lx58aabp0r.testnet3.goat.network`
+- **Merchant Portal API**: `${BASE}`
   - Merchant management endpoints: `/merchant/v1/...`
   - Payment gateway endpoints: `/api/v1/...`
 - **Merchant Portal Frontend**: `https://x402-merchant-lx58aabp0r.testnet3.goat.network`
@@ -70,9 +75,28 @@ interface IX402CallbackAdapter {
 
 ### GOAT Mainnet (Chain ID: 2345)
 
-- **Merchant Portal API**: `https://x402-api.goat.network/merchant`
+- **Merchant Portal API**: `https://x402-api.goat.network`
+  - Merchant management endpoints: `/merchant/v1/...`
+  - Payment gateway endpoints: `/api/v1/...`
+- **Merchant Portal Frontend**: `https://x402-merchant.goat.network`
 - **RPC**: `https://rpc.goat.network`
 - **Explorer**: `https://explorer.goat.network`
+
+## Base URL — select your network
+
+All commands below use `$BASE` (the Merchant Portal API host) and `$CHAIN_ID`.
+Export the pair for your target network first:
+
+```bash
+# GOAT Testnet3 (default)
+BASE="https://x402-api-lx58aabp0r.testnet3.goat.network"; CHAIN_ID=48816
+
+# GOAT Mainnet — real funds; confirm with the user first
+# BASE="https://x402-api.goat.network"; CHAIN_ID=2345
+```
+
+Use the matching token contract from [Supported Tokens](#supported-tokens) for
+your chosen network (testnet and mainnet have different addresses).
 
 ## Supported Tokens
 
@@ -90,7 +114,9 @@ interface IX402CallbackAdapter {
 | USDC  | `0x3022b87ac063DE95b1570F46f5e470F8B53112D8` | 6 |
 | USDT  | `0xE1AD845D93853fff44990aE0DcecD8575293681e` | 6 |
 
-## Faucet
+## Faucet (Testnet3 only)
+
+Mainnet uses real funds — there is no faucet. The contract below is Testnet3 only.
 
 Contract: `0x89e7dfd01a86e5393ce6d8A78c9aa6653Ee113A6` (GoatTestnetFaucet, ERC1967Proxy)
 
@@ -114,7 +140,7 @@ cast call 0x89e7dfd01a86e5393ce6d8A78c9aa6653Ee113A6 \
 Ask the user for: `merchant_id`, `name`, `email`, `password`, `receive_type` (DIRECT or DELEGATE).
 
 ```bash
-curl -s -X POST https://x402-api-lx58aabp0r.testnet3.goat.network/merchant/v1/auth/register \
+curl -s -X POST ${BASE}/merchant/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "merchant_id": "<merchant_id>",
@@ -132,7 +158,7 @@ Registration requires **admin approval** before the account can be used. Registr
 Alternatively, use invite code registration (auto-approved, but initial fee balance still requires admin top-up):
 
 ```bash
-curl -s -X POST https://x402-api-lx58aabp0r.testnet3.goat.network/merchant/v1/auth/register/invite \
+curl -s -X POST ${BASE}/merchant/v1/auth/register/invite \
   -H "Content-Type: application/json" \
   -d '{"invite_code":"<code>","email":"<email>","password":"<password>"}'
 ```
@@ -140,7 +166,7 @@ curl -s -X POST https://x402-api-lx58aabp0r.testnet3.goat.network/merchant/v1/au
 ## Step 2: Login
 
 ```bash
-curl -s -X POST https://x402-api-lx58aabp0r.testnet3.goat.network/merchant/v1/auth/login \
+curl -s -X POST ${BASE}/merchant/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"<email>","password":"<password>"}'
 ```
@@ -152,27 +178,30 @@ Returns `access_token` (expires in 3600s) and `refresh_token`. Use the access_to
 Ask the user for: wallet address, chain, token.
 
 ```bash
-curl -s -X POST https://x402-api-lx58aabp0r.testnet3.goat.network/merchant/v1/addresses \
+curl -s -X POST ${BASE}/merchant/v1/addresses \
   -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json" \
   -d '{
-    "chain_id": 48816,
+    "chain_id": <CHAIN_ID>,
     "symbol": "USDC",
-    "token_contract": "0x29d1ee93e9ecf6e50f309f498e40a6b42d352fa1",
+    "token_contract": "<USDC contract for your network — see Supported Tokens>",
     "address": "<wallet_address>"
   }'
 ```
 
+> Use the chain id and token contract for your selected network (Testnet3
+> `48816` / Mainnet `2345`).
+
 To update, first remove the old address then add a new one:
 ```bash
-curl -s -X DELETE https://x402-api-lx58aabp0r.testnet3.goat.network/merchant/v1/addresses/48816/USDC \
+curl -s -X DELETE ${BASE}/merchant/v1/addresses/${CHAIN_ID}/USDC \
   -H "Authorization: Bearer <access_token>"
 ```
 
 ## Step 4: Generate API Keys
 
 ```bash
-curl -s -X POST https://x402-api-lx58aabp0r.testnet3.goat.network/merchant/v1/api-keys/rotate \
+curl -s -X POST ${BASE}/merchant/v1/api-keys/rotate \
   -H "Authorization: Bearer <access_token>"
 ```
 
@@ -184,7 +213,7 @@ Creating orders requires merchant fee balance (e.g., $0.05 per DIRECT order on G
 
 Fee config query:
 ```bash
-curl -s https://x402-api-lx58aabp0r.testnet3.goat.network/merchant/v1/fees/config \
+curl -s ${BASE}/merchant/v1/fees/config \
   -H "Authorization: Bearer <access_token>"
 ```
 
@@ -192,7 +221,7 @@ curl -s https://x402-api-lx58aabp0r.testnet3.goat.network/merchant/v1/fees/confi
 
 Check balance:
 ```bash
-curl -s https://x402-api-lx58aabp0r.testnet3.goat.network/merchant/v1/balance \
+curl -s ${BASE}/merchant/v1/balance \
   -H "Authorization: Bearer <access_token>"
 ```
 
@@ -212,7 +241,7 @@ TIMESTAMP=$(date +%s)
 NONCE=$(uuidgen | tr '[:upper:]' '[:lower:]')
 
 DAPP_ORDER_ID="dapp_${TIMESTAMP}"
-CHAIN_ID="48816"
+CHAIN_ID="${CHAIN_ID:-48816}"   # 48816 = Testnet3, 2345 = Mainnet (from the Base URL section)
 TOKEN_SYMBOL="USDC"
 FROM_ADDRESS="<payer_address>"
 AMOUNT_WEI="1000000"  # 1.0 USDC (6 decimals)
@@ -221,7 +250,7 @@ PAYLOAD="amount_wei=${AMOUNT_WEI}&api_key=${API_KEY}&chain_id=${CHAIN_ID}&dapp_o
 
 SIGN=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "$API_SECRET")
 
-curl -s -X POST "https://x402-api-lx58aabp0r.testnet3.goat.network/api/v1/orders" \
+curl -s -X POST "${BASE}/api/v1/orders" \
   -H "Content-Type: application/json" \
   -H "X-API-Key: ${API_KEY}" \
   -H "X-Timestamp: ${TIMESTAMP}" \
@@ -250,7 +279,7 @@ CHECKOUT_VERIFIED → PAYMENT_CONFIRMED → INVOICED (complete)
 
 Query order status:
 ```bash
-curl -s "https://x402-api-lx58aabp0r.testnet3.goat.network/api/v1/orders/<order_id>" \
+curl -s "${BASE}/api/v1/orders/<order_id>" \
   -H "X-API-Key: ${API_KEY}" \
   -H "X-Timestamp: ${TIMESTAMP}" \
   -H "X-Nonce: ${NONCE}" \
